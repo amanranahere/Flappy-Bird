@@ -1,11 +1,7 @@
-//
-// variables
-//
-
 // board
 let board;
-let boardWidth = 1300; // originally : boardWidth = 360
-let boardHeight = 640;
+let boardWidth = window.innerWidth;
+let boardHeight = window.innerHeight;
 let ctx;
 
 // bird
@@ -14,7 +10,6 @@ let birdHeight = 24;
 let birdX = boardWidth / 8;
 let birdY = boardHeight / 2;
 let birdImg;
-
 let bird = {
   x: birdX,
   y: birdY,
@@ -28,22 +23,16 @@ let pipeWidth = 64;
 let pipeHeight = 512;
 let pipeX = boardWidth;
 let pipeY = 0;
-
 let topPipeImg;
 let bottomPipeImg;
 
-//game physics
-let velocityX = -2; // speed of the pipes moving towards left
-let velocityY = 0; // bird jump
-let gravity = 0.23; // bringing the bird downwards
+let velocityX = -2;
+let velocityY = 0;
+let gravity = 0.23;
 
-//
 let gameOver = false;
 let score = 0;
-
-//
-// functions
-//
+let gameStarted = false;
 
 window.onload = function () {
   board = document.getElementById("board");
@@ -66,12 +55,11 @@ window.onload = function () {
 
   requestAnimationFrame(update);
   setInterval(placePipe, 1500);
-  addEventListener("keydown", moveBird);
-  addEventListener("keydown", resetGame);
+  addEventListener("keydown", handleKeyPress);
+  addEventListener("touchstart", handleTouch);
 };
 
 // Main game loop
-
 function update() {
   requestAnimationFrame(update);
 
@@ -81,10 +69,14 @@ function update() {
 
   ctx.clearRect(0, 0, boardWidth, boardHeight);
 
+  if (!gameStarted) {
+    displayStartMessage();
+    return;
+  }
+
   // bird
   velocityY += gravity;
-  // bird.y += velocityY;
-  bird.y = Math.max(bird.y + velocityY, 0); // bird doesn't move out of the top of the canvas
+  bird.y = Math.max(bird.y + velocityY, 0);
   ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
 
   if (bird.y > board.height) {
@@ -98,7 +90,7 @@ function update() {
     ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
 
     if (!pipe.passed && bird.x > pipe.x + pipe.width) {
-      score += 0.5; // 0.5 bcz there are 2 pipes so, 0.5 * 2 = 1
+      score += 0.5;
       pipe.passed = true;
     }
 
@@ -109,7 +101,7 @@ function update() {
 
   // clear pipes
   while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth) {
-    pipeArray.shift(); // removes the first element of the array
+    pipeArray.shift();
   }
 
   // score
@@ -118,17 +110,20 @@ function update() {
   ctx.fillText(score, 10, 45);
 
   if (gameOver) {
-    ctx.fillText("GAME OVER!", 500, 120); // originally : 35, 120
-
+    ctx.fillText("GAME OVER!", 10, boardHeight / 7);
     ctx.font = "20px sans-serif";
-    ctx.fillText("Press 'ESC' to restart!", 545, 160); // originally : 80, 160
+    ctx.fillText("Press 'ESC' or tap to restart!", 15, boardHeight / 5);
   }
 }
 
+function displayStartMessage() {
+  ctx.fillStyle = "white";
+  ctx.font = "30px sans-serif";
+  ctx.fillText("Press 'SPACE' or tap to start", 10, 45);
+}
+
 function placePipe() {
-  if (gameOver) {
-    return;
-  }
+  if (gameOver || !gameStarted) return;
 
   let randomPipeY = pipeY - pipeHeight / 4 - Math.random() * (pipeHeight / 2);
   let openingSpace = boardHeight / 4;
@@ -156,21 +151,35 @@ function placePipe() {
   pipeArray.push(bottomPipe);
 }
 
-// move the bird
-function moveBird(e) {
-  if (e.code == "Space" || e.code == "ArrowUp") {
+function handleKeyPress(e) {
+  if (e.code === "Escape") {
+    resetGame();
+  } else if (e.code === "Space") {
+    if (!gameStarted) {
+      gameStarted = true;
+    } else if (!gameOver) {
+      velocityY = -6;
+    }
+  }
+}
+
+function handleTouch(e) {
+  if (gameOver) {
+    resetGame();
+  } else if (!gameStarted) {
+    gameStarted = true;
+  } else {
     velocityY = -6;
   }
 }
 
-// reset the game
-function resetGame(e) {
-  if (e.code == "Escape") {
-    bird.y = birdY;
-    pipeArray = [];
-    score = 0;
-    gameOver = false;
-  }
+function resetGame() {
+  bird.y = birdY;
+  pipeArray = [];
+  score = 0;
+  gameOver = false;
+  gameStarted = false;
+  velocityY = 0;
 }
 
 function detectCollision(a, b) {
