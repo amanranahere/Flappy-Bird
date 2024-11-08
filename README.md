@@ -38,7 +38,7 @@ This is my version of the classic Flappy Bird game! Built from scratch using Jav
 
 ## Screenshots
 
-![Flappy Bird Clone Screenshot](assets/Screenshot.jpg)  
+![Flappy Bird Clone Screenshot](assets/Screenshot.png)  
 _Check out the gameplay screenshot._
 
 <br>
